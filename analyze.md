@@ -65,13 +65,11 @@ parallel filter_vcf \
     1000_genomes/ALL.chr{}.$SUFFIX.vcf.gz exome_mask/{}.bed 1000_exome/{}.vcf.gz ::: {1..22}
 ```
 
-***
-
 # Downsample genotypes
 
-* 0|0 → 0
-* 0|1, 1|0 → 1
-* 1|1 → 2
+* `0|0` → 0
+* `0|1`, `1|0` → 1
+* `1|1` → 2
 
 ```bash
 mkdir -p 1000_downsampled
@@ -81,10 +79,8 @@ downsample_vcf () {
     bcftools query -f '[%GT ]\n' $INFILE \
         | sed -e 's.0|0.0.g' -e 's.0|1.1.g' -e 's.1|0.1.g' -e 's.1|1.2.g' \
         | tr -d ' ' | gzip -c > $OUTFILE
-    echo $INFILE to $OUTFILE
 }
 export -f downsample_vcf
-nice -n 20 parallel downsample_vcf \
-     1000_downsampled/{}.txt.gz ::: {1..22}
-
+parallel downsample_vcf \
+     1000_exome/{}.vcf.gz 1000_downsampled/{}.txt.gz ::: {1..22}
 ```
