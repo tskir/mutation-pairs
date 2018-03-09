@@ -76,9 +76,10 @@ mkdir -p 1000_downsampled
 downsample_vcf () {
     INFILE=$1
     OUTFILE=$2
+    # FIXME: grep -v '|' is a horrible bodge to filter out non-binary sites
     bcftools query -f '[%GT ]\n' $INFILE \
         | sed -e 's.0|0.0.g' -e 's.0|1.1.g' -e 's.1|0.1.g' -e 's.1|1.2.g' \
-        | tr -d ' ' | gzip -c > $OUTFILE
+        | tr -d ' ' | grep -v '|' | gzip -c > $OUTFILE
 }
 export -f downsample_vcf
 parallel downsample_vcf \
