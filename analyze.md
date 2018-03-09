@@ -19,7 +19,7 @@ touch *.tbi
 cd ..
 ```
 
-# Prepare filtering
+# Filter data
 
 ## Install dependencies (bedops)
 
@@ -49,7 +49,7 @@ mkdir -p exome_mask
 awk -F$'\t' '{print $0 > "exome_mask/" $1 ".bed"}' exons.merged.bed
 ```
 
-# Filter VCF by exome
+## Filter VCF by exome
 
 ```bash
 mkdir -p 1000_exome
@@ -65,7 +65,9 @@ parallel filter_vcf \
     1000_genomes/ALL.chr{}.$SUFFIX.vcf.gz exome_mask/{}.bed 1000_exome/{}.vcf.gz ::: {1..22}
 ```
 
-# Downsample genotypes
+# Prepare data for statistical testing
+
+## Downsample genotypes
 
 * `0|0` → 0
 * `0|1`, `1|0` → 1
@@ -84,4 +86,15 @@ downsample_vcf () {
 export -f downsample_vcf
 parallel downsample_vcf \
      1000_exome/{}.vcf.gz 1000_downsampled/{}.txt.gz ::: {1..22}
+```
+
+## Separate location & genotypes information
+
+```bash
+parallel 'zcat 1000_downsampled/{}.txt.gz \
+    | cut -d " " -f-4 \
+    | gzip -c > 1000_downsampled/{}.locations.txt.gz' ::: {1..22}
+parallel 'zcat 1000_downsampled/{}.txt.gz \
+    | cut -d " " -f5 \
+    | gzip -c > 1000_downsampled/{}.genotypes.txt.gz' ::: {1..22}
 ```
